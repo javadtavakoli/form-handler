@@ -12,7 +12,6 @@ function App() {
     },
   });
   const firstName = watch("firstName");
-  console.log("render", firstName);
 
   return (
     <div className="App">
@@ -26,10 +25,13 @@ function App() {
         <input {...register("firstName")} />
         <input {...register("lastName")} />
         <button
+          type="button"
           onClick={() => {
             setValue("firstName", "this");
           }}
-        >Change name</button>
+        >
+          Change name
+        </button>
         <button type="submit">Submit</button>
       </form>
     </div>

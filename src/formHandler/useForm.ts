@@ -1,29 +1,30 @@
-import { useRef, createRef, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { IUseFormProps, IFormValues, TRegisteredFormFields } from "./types";
 import _ from "lodash";
 const useForm = <FormValues extends IFormValues>(
   props?: IUseFormProps<FormValues>
 ) => {
-  const [fieldsValueState, setFieldsValueState] = useState<Partial<FormValues>>(
-    {}
-  );
-  const [controlledFields, setControlledFields] = useState<
-    (keyof FormValues)[]
-  >([]);
-  const registeredFeilds = useRef<TRegisteredFormFields<FormValues>>({});
-  const onChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const field = event.target;
-      if (field.name in fieldsValueState) {
-        setFieldsValueState((_fieldsValue) => ({
-          ..._fieldsValue,
-          [field.name]: field.value,
-        }));
-      }
-    },
-    [fieldsValueState]
-  );
+  const [watchingFields, setWatchingFields] = useState<Partial<FormValues>>({});
 
+  const [registeredFields, setRegisteredFields] = useState<
+    TRegisteredFormFields<FormValues>
+  >({});
+  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const field = event.target;
+    changeWathingFieldValue(field.name, field.value);
+  };
+
+  const changeWathingFieldValue = (
+    fieldName: keyof FormValues,
+    value: string
+  ) => {
+    if (fieldName in watchingFields) {
+      setWatchingFields((_fieldsValue) => ({
+        ..._fieldsValue,
+        [fieldName]: value,
+      }));
+    }
+  };
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     console.log(event.target.name, event.type, "triggered");
   };
@@ -34,49 +35,43 @@ const useForm = <FormValues extends IFormValues>(
     return (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       const formValues: Partial<FormValues> = {};
-      const allFields = registeredFeilds.current;
-      for (const fieldName in allFields) {
-        const field = allFields[fieldName];
-        if (!field) return;
-        const value = field.ref?.current?.value;
-        _.assign(formValues, { [fieldName]: value });
+      for (const fieldName in registeredFields) {
+        _.assign(formValues, { [fieldName]: getFieldValue(fieldName) });
       }
       submit(formValues);
     };
   };
-  const setValue = (fieldName: keyof FormValues, value: string) => {
-    if (!controlledFields.includes(fieldName)) {
-      setControlledFields((_fields) => _fields.concat(fieldName));
+  const getFieldValue = (fieldName: keyof FormValues): string | undefined => {
+    const field = registeredFields[fieldName]?.ref;
+    if (!field) return;
+    return field.value;
+  };
+  const setFieldValue = (fieldName: keyof FormValues, value: string) => {
+    const fieldInput = registeredFields[fieldName]?.ref;
+    if (fieldInput) {
+      fieldInput.value = value;
+      changeWathingFieldValue(fieldName, value);
     }
-    setFieldsValueState((_fieldsValue) => ({
-      ..._fieldsValue,
-      [fieldName]: value,
-    }));
   };
   const watch = useCallback(
     (fieldName: keyof FormValues) => {
-      if (fieldName in fieldsValueState) {
-        return fieldsValueState[fieldName];
+      if (fieldName in watchingFields) {
+        return watchingFields[fieldName];
       }
-      const value = registeredFeilds.current[fieldName]?.ref?.current?.value;
-      setFieldsValueState((_watchingFields) => {
+      const value = getFieldValue(fieldName);
+      setWatchingFields((_watchingFields) => {
         _.assign(_watchingFields, { [fieldName]: value });
         return _watchingFields;
       });
       return value;
     },
-    [fieldsValueState]
+    [watchingFields]
   );
-  console.log(controlledFields);
 
   const register = (inputName: keyof FormValues) => {
-    const isControlled = controlledFields.includes(inputName);
-    const fieldRef = createRef<HTMLInputElement>();
-    registeredFeilds.current[inputName] = { ref: fieldRef };
-    const defaultValue =
-      props?.initialValues && !isControlled
-        ? props.initialValues[inputName]
-        : undefined;
+    const defaultValue = props?.initialValues
+      ? props.initialValues[inputName]
+      : undefined;
     return {
       name: inputName,
       onChange,
@@ -84,11 +79,24 @@ const useForm = <FormValues extends IFormValues>(
       onBlur,
       onFocus,
       defaultValue,
-      ref: fieldRef,
-      key: isControlled ? `${inputName.toString()}-controlled` : inputName,
-      value: isControlled ? fieldsValueState[inputName] : undefined,
+      ref: (ref: HTMLInputElement | null) => {
+        if (ref) {
+          if (!(inputName in registeredFields)) {
+            setRegisteredFields((_fields) => ({
+              ..._fields,
+              [inputName]: { ref },
+            }));
+          }
+        }
+      },
     };
   };
-  return { register, handleSubmit, watch, setValue };
+  return {
+    register,
+    handleSubmit,
+    watch,
+    setValue: setFieldValue,
+    getFieldValue,
+  };
 };
 export default useForm;
