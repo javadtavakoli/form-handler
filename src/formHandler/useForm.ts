@@ -110,23 +110,7 @@ const useForm = <FormValues extends IFormValues>(
     },
     [watchingFields, getFieldValue]
   );
-  const addFieldToRegistery = useCallback(
-    (ref: HTMLInputElement | null, inputName: keyof FormValues) => {
-      if (!ref) return;
-      if (inputName in registeredFields) return;
-      setRegisteredFields((_fields) => ({
-        ..._fields,
-        [inputName]: { ref },
-      }));
-      if (inputName in watchingFields) {
-        setWatchingFields((_watchingFields) => ({
-          ..._watchingFields,
-          [inputName]: ref.value,
-        }));
-      }
-    },
-    [registeredFields, watchingFields]
-  );
+
   const register = useCallback(
     (inputName: keyof FormValues): IRegisterReturn<FormValues> => {
       const defaultValue = props?.initialValues
@@ -138,11 +122,17 @@ const useForm = <FormValues extends IFormValues>(
         id: inputName,
         defaultValue,
         ref: (ref: HTMLInputElement | null) => {
-          addFieldToRegistery(ref, inputName);
+          if (ref && !(inputName in registeredFields)) {
+            setRegisteredFields((_fields) => ({
+              ..._fields,
+              [inputName]: { ref },
+            }));
+            changeWathingFieldValue(inputName, ref.value);
+          }
         },
       };
     },
-    [props, addFieldToRegistery, onChange]
+    [props, onChange, changeWathingFieldValue,registeredFields]
   );
   return {
     register,
