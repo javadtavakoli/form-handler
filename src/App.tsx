@@ -2,6 +2,7 @@ import React from "react";
 import "./App.css";
 import useForm from "./formHandler/useForm";
 import * as yup from "yup";
+import { IRegisterReturn } from "./formHandler/types";
 type FormValues = {
   firstName: string;
   lastName: string;
@@ -12,6 +13,7 @@ const formSchema = yup.object({
   lastName: yup.string().required(),
   email: yup.string().email(),
 });
+
 function App() {
   const {
     register,
@@ -35,26 +37,46 @@ function App() {
           console.log(values, "values");
         })}
       >
-        {firstName}
-        <input {...register("firstName")} />
-        <input {...register("lastName")} />
-        <input {...register("email")} />
-        {errors.map((err) => (
-          <div key={err}>{err}</div>
-        ))}
-        <button
-          type="button"
-          onClick={() => {
-            setFieldValue("firstName", "this");
-          }}
-        >
-          Change name
-        </button>
-        <button type="submit">Submit</button>
-        {submitLoading && "loading..."}
+        <div className="Form">
+          <p>Your name is: {firstName}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setFieldValue("lastName", "tavakoli");
+            }}
+          >
+            Change last name to tavakoli
+          </button>
+          <Input
+            label="First name"
+            register={register}
+            inputName={"firstName"}
+          />
+          <Input label="Last name" register={register} inputName="lastName" />
+          <Input label="Email" register={register} inputName="email" />
+
+          {errors.map((err) => (
+            <p key={err} className="error">
+              {err}
+            </p>
+          ))}
+
+          <button type="submit">Submit</button>
+          {submitLoading && "loading..."}
+        </div>
       </form>
     </div>
   );
 }
-
+interface InputProps {
+  register: (inputName: keyof FormValues) => IRegisterReturn<FormValues>;
+  inputName: keyof FormValues;
+  label: string;
+}
+const Input = (props: InputProps) => (
+  <div className="InputContainer">
+    <label htmlFor={props.inputName}>{props.label}:</label>
+    <input {...props.register(props.inputName)} />
+  </div>
+);
 export default App;
