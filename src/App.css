@@ -1,6 +1,7 @@
 .App {
   display:  flex;
-  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 .Form{
   width: 20rem;
@@ -23,4 +24,10 @@ button {
 input {
   padding: 0.5rem;
   border-radius: 5px;
+}
+.Response {
+  margin-top: 1rem;
+  flex: 1;
+  background-color: #ecf0f1;
+  padding: 1rem;
 }

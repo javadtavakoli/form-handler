@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "./App.css";
 import useForm from "./formHandler/useForm";
 import * as yup from "yup";
@@ -28,15 +28,14 @@ function App() {
     },
     schema: formSchema,
   });
+  const [response, setResponse] = useState("");
   const firstName = watch("firstName");
-
+  const onSubmit = (values: FormValues) => {
+    setResponse(JSON.stringify(values));
+  };
   return (
     <div className="App">
-      <form
-        onSubmit={handleSubmit((values) => {
-          console.log(values, "values");
-        })}
-      >
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="Form">
           <p>Your name is: {firstName}</p>
           <button
@@ -65,6 +64,12 @@ function App() {
           {submitLoading && "loading..."}
         </div>
       </form>
+      {response && (
+        <div className="Response">
+          <h2>Submitted values:</h2>
+          <p>{response}</p>
+        </div>
+      )}
     </div>
   );
 }
