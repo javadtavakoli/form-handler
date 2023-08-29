@@ -4,12 +4,14 @@ import {
   IFormValues,
   TRegisteredFormFields,
   IValidationResult,
+  IRegisterReturn,
+  IUseFormReturn,
 } from "./types";
 import _ from "lodash";
 import { ValidationError } from "yup";
 const useForm = <FormValues extends IFormValues>(
   props?: IUseFormProps<FormValues>
-) => {
+): IUseFormReturn<FormValues> => {
   const [watchingFields, setWatchingFields] = useState<Partial<FormValues>>({});
   const [errors, setErrors] = useState<string[]>([]);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -126,7 +128,7 @@ const useForm = <FormValues extends IFormValues>(
     [registeredFields, watchingFields]
   );
   const register = useCallback(
-    (inputName: keyof FormValues) => {
+    (inputName: keyof FormValues): IRegisterReturn<FormValues> => {
       const defaultValue = props?.initialValues
         ? props.initialValues[inputName]
         : undefined;
